@@ -67,11 +67,16 @@ if __name__=='__main__':
 
         if args.command == 'all':
 
-            """ To get the details of all the devices """
+            """
+            To get the details of all the devices
+             '/dataservice/device'
+            """
 
             deviceInfo = getData.getDeviceIP(vmanage_host,vmanage_port,header)
 
-            """ iterate on the colleted info and create dict to collect information"""
+            """
+            iterate on the colleted info and create dict to collect information
+            """
 
             for iter_deviceInfo in deviceInfo:
 
@@ -84,15 +89,36 @@ if __name__=='__main__':
                         deviceInfo_data[iter_deviceInfo["site-id"]]["uuid"].append(iter_deviceInfo["uuid"])
                         deviceInfo_data[iter_deviceInfo["site-id"]][iter_deviceInfo["system-ip"]] = {}
 
+                """
+                if the device is reachable get WAN interfaces
+                API '/dataservice/device/control/waninterface?deviceId='+str(deviceID)
+                """
+
                 if iter_deviceInfo["device-type"] == "vedge" and iter_deviceInfo["reachability"] == "reachable":
                     wanIFName = getData.getWANIfName(vmanage_host,vmanage_port,header,iter_deviceInfo["system-ip"])
                     print(f' Gathering the data from {iter_deviceInfo["uuid"]} - {iter_deviceInfo["system-ip"]} ')
                     cumBW = 0
 
+                    """
+                    if have a sub-interface strip the sub-interface tag
+                    """
+
                     for iter_wanIFName in wanIFName:
                         TransportIfName = re.split(r"\.", iter_wanIFName["interface"])[0]
                         data = queryPayload.statsIFAgg(iter_deviceInfo["system-ip"] , TransportIfName)
                         time.sleep(2)
+
+                        """
+                        Get peak interface stats of a week which is aggegrated over 30 mins each
+                        class queryPayload():
+                            def statsIFAgg(systemIP, interface, duration = "168", interval = 30):
+                        168 hours is 7 days
+                        interval in mins
+                        '/dataservice/statistics/interface/aggregation'
+                        Aggregate TX + RX and pick the peak
+
+                        """
+
                         interfaceStats = postData.getInterfaceStats(vmanage_host,vmanage_port,header,data)
                         maxagg = max(interfaceStats, key=lambda x: x["tx_kbps"]+ x["rx_kbps"])
                         deviceInfo_data[iter_deviceInfo["site-id"]][iter_deviceInfo["system-ip"]][TransportIfName] = maxagg["tx_kbps"]+maxagg["rx_kbps"]
@@ -105,9 +131,18 @@ if __name__=='__main__':
 
         elif args.command == 'sid':
 
+            """
+            To get the details of all the devices
+             '/dataservice/device'
+            """
+
             deviceInfo = getData.getDeviceIP(vmanage_host,vmanage_port,header)
 
             for iter_deviceInfo in deviceInfo:
+
+                """
+                check if the device is vedge add details to dictonary
+                """
 
                 if iter_deviceInfo["device-type"] == "vedge" and iter_deviceInfo["site-id"] == args.id :
                     if iter_deviceInfo["site-id"] not in deviceInfo_data:
@@ -116,21 +151,51 @@ if __name__=='__main__':
                         deviceInfo_data[iter_deviceInfo["site-id"]]["uuid"].append(iter_deviceInfo["uuid"])
                         deviceInfo_data[iter_deviceInfo["site-id"]][iter_deviceInfo["system-ip"]] = {}
 
+                """
+                if the device is reachable get WAN interfaces
+                API '/dataservice/device/control/waninterface?deviceId='+str(deviceID)
+                """
+
                 if (iter_deviceInfo["device-type"] == "vedge" and iter_deviceInfo["reachability"] == "reachable") and iter_deviceInfo["site-id"] == args.id:
                     wanIFName = getData.getWANIfName(vmanage_host,vmanage_port,header,iter_deviceInfo["system-ip"])
                     print(f' Gathering the data from {iter_deviceInfo["uuid"]} - {iter_deviceInfo["system-ip"]} ')
                     cumBW = 0
 
 
+                    """
+                    if have a sub-interface strip the sub-interface tag
+                    """
+
+
                     for iter_wanIFName in wanIFName:
                         TransportIfName = re.split(r"\.", iter_wanIFName["interface"])[0]
                         data = queryPayload.statsIFAgg(iter_deviceInfo["system-ip"] , TransportIfName)
                         time.sleep(2)
+
+
+                        """
+                        Get peak interface stats of a week which is aggegrated over 30 mins each
+                        class queryPayload():
+                            def statsIFAgg(systemIP, interface, duration = "168", interval = 30):
+                        168 hours is 7 days
+                        interval in mins
+                        '/dataservice/statistics/interface/aggregation'
+                        Aggregate TX + RX and pick the peak
+                        """
+
+
                         interfaceStats = postData.getInterfaceStats(vmanage_host,vmanage_port,header,data)
                         maxagg = max(interfaceStats, key=lambda x: x["tx_kbps"]+ x["rx_kbps"])
                         deviceInfo_data[iter_deviceInfo["site-id"]][iter_deviceInfo["system-ip"]][TransportIfName] = maxagg["tx_kbps"]+maxagg["rx_kbps"]
                         cumBW += (maxagg["tx_kbps"]+maxagg["rx_kbps"])
                     deviceInfo_data[iter_deviceInfo["site-id"]]["Aggregate"] += cumBW
+
+
+
+        """ Calculate the LIcense tier based of
+        https://www.cisco.com/c/en/us/products/collateral/software/one-wan-subscription/guide-c07-740642.html
+        Bandwidth entitlement (Entitled throughput when selecting Bandwidth)
+        """
 
 
         for iter_deviceInfo_data in deviceInfo_data:
@@ -146,11 +211,15 @@ if __name__=='__main__':
             elif 2000 < AggMbps <= 20000:
                 deviceInfo_data[iter_deviceInfo_data]["license Tier"] = "T3"
 
+        """
+        Copying the DICT data to CSV
+        """
+
 
         fields = [ 'Site-ID', 'uuid', 'Aggregate', 'license Tier' ]
         filename = f'license-{now.strftime("%m-%d-%Y_%H-%M-%S")}.csv'
         print(f"""
-        Please view the {filename} for the license teir and aggregate per site
+        Please view the {filename} for the license teir and aggregate info per site
         """)
         with open(filename,'w') as f:
             w = csv.DictWriter(f,fields)
