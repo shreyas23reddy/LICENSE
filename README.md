@@ -2,25 +2,40 @@
 
 
 (License-Automation) shreredd@SHREREDD-M-856H License-Automation % python3 license.py -h              
-usage: license.py [-h] [-a ADDRESS] [-p PORT] [-u USERNAME] [-pw PASSWORD]
-                  {all,sid} ...
+
+usage: license.py [-h] 
+[-a ADDRESS] 
+[-p PORT] 
+[-u USERNAME] 
+[-pw PASSWORD]
+{all,sid} ...
+
+
+_______________________________________________________
+
 
 positional arguments:
-  {all,sid}             'all' - run script on all sites / 'sid' - run script
-                        on a specific site
+ 
+ {all,sid}   
+ 'all' - run script on all sites 
+ 'sid' - run script on a specific site
+
+________________________________________________________
 
 optional arguments:
   -h, --help            show this help message and exit
-  -a ADDRESS, --address ADDRESS
-                        vManage IP address
+  
+  -a ADDRESS, --address ADDRESS vManage IP address
+  
   -p PORT, --port PORT  vManage port
-  -u USERNAME, --username USERNAME
-                        vManage username
-  -pw PASSWORD, --password PASSWORD
-                        vManage password
+  
+  -u USERNAME, --username USERNAME vManage username
+  
+  -pw PASSWORD, --password PASSWORD vManage password
 
 
 
+__________________________________________________________
 
 (License-Automation) shreredd@SHREREDD-M-856H License-Automation % python3 license.py -a 10.10.10.1 -p 8443 -u admin -pw Admin all
 
@@ -37,15 +52,17 @@ Gathering the data from CSR-54674ABC- 105.105.105.2
 
 
 
-
+_____________________________________________________________
 
 (License-Automation) shreredd@SHREREDD-M-856H License-Automation % python3 license.py -a 10.10.10.1 -p 8443 -u admin -pw Admin sid -h 
+
 usage: license.py sid [-h] -id ID
 
 optional arguments:
   -h, --help  show this help message and exit
   -id ID
 
+_______________________________________________________________
 
 (License-Automation) shreredd@SHREREDD-M-856H License-Automation % python3 license.py -a 10.10.10.1 -p 8443 -u admin -pw Admin sid -id 40
  Gathering the data from ASR1002-X-FOX1933G4DD - 40.40.40.1 
